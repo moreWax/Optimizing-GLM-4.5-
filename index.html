@@ -1,0 +1,1422 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Optimizing GLM-4.5: Advanced Model Compression Techniques</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #1e3a8a;
+            --secondary: #64748b;
+            --accent: #0ea5e9;
+            --background: #f8fafc;
+            --surface: #ffffff;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border: #e2e8f0;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            color: var(--text-primary);
+            background-color: var(--background);
+            line-height: 1.6;
+        }
+        
+        .serif {
+            font-family: 'Playfair Display', serif;
+        }
+        
+        .toc {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 280px;
+            height: 100vh;
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            overflow-y: auto;
+            z-index: 1000;
+            padding: 2rem 1.5rem;
+        }
+        
+        .main-content {
+            margin-left: 280px;
+            min-height: 100vh;
+        }
+        
+        .hero-section {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .hero-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(45deg, rgba(30, 58, 138, 0.8), rgba(51, 65, 85, 0.6));
+            z-index: 1;
+        }
+        
+        .hero-content {
+            position: relative;
+            z-index: 2;
+        }
+        
+        .bento-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+            align-items: center;
+        }
+        
+        @media (max-width: 768px) {
+            .bento-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .technique-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .technique-card:hover {
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+        
+        .citation-link {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 500;
+            border-bottom: 1px solid transparent;
+            transition: border-color 0.2s ease;
+        }
+        
+        .citation-link:hover {
+            border-bottom-color: var(--accent);
+        }
+        
+        .section-divider {
+            height: 1px;
+            background: linear-gradient(to right, transparent, var(--border), transparent);
+            margin: 4rem 0;
+        }
+
+        /* Mermaid diagram styles */
+        .mermaid {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: visible;
+            max-width: 100%;
+            max-height: 600px;
+            background-color: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin: 2rem 0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            position: relative;
+            border: 1px solid var(--border);
+        }
+
+        .mermaid svg {
+            max-width: 100%;
+            height: auto;
+            cursor: grab;
+            transition: transform 0.2s ease;
+            transform-origin: center center;
+            filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+        }
+
+        .mermaid svg:active {
+            cursor: grabbing;
+        }
+
+        .mermaid-container {
+            display: flex;
+            justify-content: center;
+            min-height: 300px;
+            max-height: 800px;
+            background: #ffffff;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 30px;
+            margin: 30px 0;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .mermaid-container .mermaid {
+            width: 100%;
+            max-width: 100%;
+            height: 100%;
+            cursor: grab;
+            transition: transform 0.3s ease;
+            transform-origin: center center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            touch-action: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        .mermaid-container .mermaid svg {
+            max-width: 100%;
+            height: 100%;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .mermaid-container .mermaid:active {
+            cursor: grabbing;
+        }
+
+        .mermaid-container.zoomed .mermaid {
+            height: 100%;
+            width: 100%;
+            cursor: grab;
+        }
+
+        .mermaid-controls {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            display: flex;
+            gap: 10px;
+            z-index: 20;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 8px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .mermaid-control-btn {
+            background: #ffffff;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            padding: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: #374151;
+            font-size: 14px;
+            min-width: 36px;
+            height: 36px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .mermaid-control-btn:hover {
+            background: #f8fafc;
+            border-color: #3b82f6;
+            color: #3b82f6;
+            transform: translateY(-1px);
+        }
+
+        .mermaid-control-btn:active {
+            transform: scale(0.95);
+        }
+        
+        .toc-link {
+            display: block;
+            padding: 0.5rem 0;
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-left: 2px solid transparent;
+            padding-left: 1rem;
+            transition: all 0.2s ease;
+        }
+        
+        .toc-link:hover, .toc-link.active {
+            color: var(--primary);
+            border-left-color: var(--accent);
+            background: rgba(14, 165, 233, 0.05);
+        }
+        
+        .toc-link.sub {
+            font-size: 0.875rem;
+            padding-left: 2rem;
+        }
+        
+        @media (max-width: 1024px) {
+            .toc {
+                display: none;
+            }
+            .main-content {
+                margin-left: 0;
+            }
+        }
+    </style>
+  </head>
+
+  <body>
+    <!-- Table of Contents -->
+    <nav class="toc">
+      <div class="mb-6">
+        <h3 class="serif text-lg font-semibold text-gray-900 mb-4">Contents</h3>
+      </div>
+      <div class="space-y-1">
+        <a href="#abstract" class="toc-link">Abstract</a>
+        <a href="#introduction" class="toc-link">1. Introduction</a>
+        <a href="#introduction-overview" class="toc-link sub">1.1 Overview</a>
+        <a href="#introduction-hardware" class="toc-link sub">1.2 Hardware Platform</a>
+        <a href="#introduction-goals" class="toc-link sub">1.3 Compression Goals</a>
+        <a href="#techniques" class="toc-link">2. Compression Techniques</a>
+        <a href="#techniques-int4" class="toc-link sub">2.1 INT4 PTQ with AWQ</a>
+        <a href="#techniques-sparsity" class="toc-link sub">2.2 Structured 2:4 Sparsity</a>
+        <a href="#techniques-mixed" class="toc-link sub">2.3 Mixed Precision</a>
+        <a href="#techniques-moe" class="toc-link sub">2.4 MoE Optimization</a>
+        <a href="#implementation" class="toc-link">3. Implementation</a>
+        <a href="#implementation-software" class="toc-link sub">3.1 Software & Libraries</a>
+        <a href="#implementation-cuda" class="toc-link sub">3.2 CUDA 8.6 Flags</a>
+        <a href="#implementation-api" class="toc-link sub">3.3 Example API</a>
+        <a href="#performance" class="toc-link">4. Performance Benchmarks</a>
+        <a href="#performance-memory" class="toc-link sub">4.1 Memory Reduction</a>
+        <a href="#performance-speed" class="toc-link sub">4.2 Inference Speedup</a>
+        <a href="#performance-accuracy" class="toc-link sub">4.3 Accuracy</a>
+        <a href="#discussion" class="toc-link">5. Discussion</a>
+        <a href="#discussion-synergy" class="toc-link sub">5.1 Quantization & Sparsity</a>
+        <a href="#discussion-moe" class="toc-link sub">5.2 MoE Architecture Impact</a>
+        <a href="#discussion-hardware" class="toc-link sub">5.3 Hardware Viability</a>
+        <a href="#discussion-future" class="toc-link sub">5.4 Future Work</a>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Hero Section -->
+      <section class="hero-section py-20">
+        <div class="hero-overlay"></div>
+        <div class="hero-content container mx-auto px-4 md:px-8">
+          <div class="bento-grid">
+            <div class="space-y-8">
+              <div class="space-y-4">
+                <h1 class="serif text-4xl md:text-6xl font-bold leading-tight">
+                  <span class="italic">Optimizing</span> GLM-4.5
+                </h1>
+                <p class="serif text-xl md:text-2xl italic text-blue-200">
+                  Advanced Model Compression Techniques
+                </p>
+              </div>
+              <p class="text-lg md:text-xl text-gray-300 max-w-2xl leading-relaxed">
+                Comprehensive suite of compression methodologies targeting CUDA 8.6 architecture,
+                achieving significant memory reduction and inference acceleration while maintaining near-lossless accuracy.
+              </p>
+            </div>
+            <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-4 md:p-8 border border-white/20">
+              <h3 class="serif text-xl md:text-2xl font-semibold mb-4 md:mb-6 text-blue-200">Key Metrics</h3>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
+                <div>
+                  <div class="text-2xl md:text-3xl font-bold text-white">355B</div>
+                  <div class="text-xs md:text-sm text-gray-300">Total Parameters</div>
+                </div>
+                <div>
+                  <div class="text-2xl md:text-3xl font-bold text-white">32B</div>
+                  <div class="text-xs md:text-sm text-gray-300">Active Parameters</div>
+                </div>
+                <div>
+                  <div class="text-2xl md:text-3xl font-bold text-white">4x</div>
+                  <div class="text-xs md:text-sm text-gray-300">Memory Reduction</div>
+                </div>
+                <div>
+                  <div class="text-2xl md:text-3xl font-bold text-white">2-3x</div>
+                  <div class="text-xs md:text-sm text-gray-300">Speedup Target</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Content Sections -->
+      <div class="container mx-auto px-4 md:px-8 py-16 max-w-4xl">
+
+        <!-- Abstract -->
+        <section id="abstract" class="mb-16">
+          <div class="bg-white rounded-2xl p-8 shadow-sm border border-gray-200">
+            <h2 class="serif text-3xl font-bold mb-6 text-gray-900">Abstract</h2>
+            <div class="prose prose-lg max-w-none">
+              <p class="text-gray-700 leading-relaxed mb-4">
+                This report details a comprehensive suite of advanced model compression techniques specifically applied to the full-scale <strong>GLM-4.5</strong> model. The primary objectives of these optimizations are to significantly reduce memory usage, accelerate inference speed, and maintain near-lossless model accuracy.
+              </p>
+              <p class="text-gray-700 leading-relaxed">
+                The methodologies are meticulously designed to leverage the capabilities of the <strong>CUDA 8.6</strong> architecture, with a particular focus on optimizing for <strong>Volta-generation GPUs</strong>. Key techniques implemented include <strong>post-training quantization (PTQ)</strong> utilizing INT4 precision for linear layers, the application of <strong>structured 2:4 sparsity</strong> patterns within attention mechanisms and feed-forward networks, and a strategic <strong>mixed precision inference</strong> approach.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Introduction -->
+        <section id="introduction" class="mb-16">
+          <h2 class="serif text-4xl font-bold mb-8 text-gray-900">Introduction</h2>
+
+          <div id="introduction-overview" class="mb-12">
+            <h3 class="serif text-2xl font-semibold mb-6 text-gray-800">Overview of GLM-4.5 Model and Deployment Challenges</h3>
+            <div class="bg-white rounded-xl p-6 border border-gray-200">
+              <p class="text-gray-700 mb-4">
+                The <strong>GLM-4.5</strong> model represents a significant advancement in large language models, characterized by a substantial parameter count. Specifically, it comprises <strong>355 billion total parameters</strong>, with <strong>32 billion active parameters</strong> engaged during the inference process <a href="https://z.ai/blog/glm-4.5" class="citation-link" target="_blank">[3]</a>.
+              </p>
+              <p class="text-gray-700">
+                This immense scale, while contributing to the model's powerful capabilities, introduces considerable computational and memory demands. Deploying such a large model in practical scenarios necessitates innovative and efficient approaches to manage these resource constraints without compromising performance.
+              </p>
+            </div>
+          </div>
+
+          <div id="introduction-hardware" class="mb-12">
+            <h3 class="serif text-2xl font-semibold mb-6 text-gray-800">Hardware Platform: CUDA 8.6 and Volta Architecture</h3>
+            <div class="bg-white rounded-xl p-6 border border-gray-200">
+              <p class="text-gray-700 mb-4">
+                The optimization efforts detailed in this report are specifically targeted for hardware platforms based on the <strong>CUDA 8.6</strong> architecture, with a primary emphasis on <strong>NVIDIA V100 GPUs</strong>
+                <a href="https://biggo.com/news/202507291912_Local_AI_Coding_Models_Reach_New_Heights" class="citation-link" target="_blank">[6]</a>. The Volta architecture, which powers the V100, introduced significant features beneficial for deep learning workloads, most notably <strong>Tensor Cores</strong>.
+              </p>
+              <div class="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-400">
+                <p class="text-blue-800 font-medium">
+                  <i class="fas fa-microchip mr-2"></i>
+                  Key Hardware Features: Tensor Cores enable mixed-precision FP16 computations, while CUDA 8.6 provides essential library support for optimized operations.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div id="introduction-goals" class="mb-12">
+            <h3 class="serif text-2xl font-semibold mb-6 text-gray-800">Goals of Compression: Memory, Speed, and Accuracy</h3>
+            <div class="grid md:grid-cols-3 gap-6">
+              <div class="technique-card">
+                <div class="flex items-center mb-4">
+                  <i class="fas fa-memory text-blue-600 text-2xl mr-3"></i>
+                  <h4 class="font-semibold text-lg">Memory Reduction</h4>
+                </div>
+                <p class="text-gray-600">
+                  Reduce memory footprint for deployment on GPUs with limited VRAM and enable larger batch sizes.
+                </p>
+              </div>
+              <div class="technique-card">
+                <div class="flex items-center mb-4">
+                  <i class="fas fa-tachometer-alt text-green-600 text-2xl mr-3"></i>
+                  <h4 class="font-semibold text-lg">Speed Increase</h4>
+                </div>
+                <p class="text-gray-600">
+                  Accelerate inference for real-time applications and improve throughput for cost-effective serving.
+                </p>
+              </div>
+              <div class="technique-card">
+                <div class="flex items-center mb-4">
+                  <i class="fas fa-bullseye text-purple-600 text-2xl mr-3"></i>
+                  <h4 class="font-semibold text-lg">Accuracy Preservation</h4>
+                </div>
+                <p class="text-gray-600">
+                  Maintain near-lossless model accuracy while achieving significant performance improvements.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <div class="section-divider"></div>
+
+        <!-- Compression Techniques -->
+        <section id="techniques" class="mb-16">
+          <h2 class="serif text-4xl font-bold mb-8 text-gray-900">Compression Techniques Applied to GLM-4.5</h2>
+
+          <div id="techniques-int4" class="mb-12">
+            <h3 class="serif text-2xl font-semibold mb-6 text-gray-800">INT4 Post-Training Quantization (PTQ) with AWQ</h3>
+            <div class="bg-white rounded-xl p-6 border border-gray-200 mb-6">
+              <p class="text-gray-700 mb-4">
+                Quantization is a fundamental technique employed to reduce the precision of the model's parameters, thereby achieving substantial memory savings and potentially accelerating inference by leveraging hardware support for lower-precision arithmetic <a href="https://developer.nvidia.com/blog/sparsity-in-int8-training-workflow-and-best-practices-for-tensorrt-acceleration/" class="citation-link" target="_blank">[69]</a>
+                <a href="https://arxiv.org/pdf/2505.08620" class="citation-link" target="_blank">[284]</a>.
+              </p>
+              <p class="text-gray-700 mb-6">
+                For the GLM-4.5 model, a <strong>post-training quantization (PTQ)</strong> approach was adopted, specifically utilizing <strong>Activation-aware Weight Quantization (AWQ)</strong>. AWQ is chosen for its ability to maintain model accuracy by carefully calibrating quantization parameters using a small, representative dataset.
+              </p>
+
+              <div class="bg-gray-900 rounded-lg p-4 mb-6 overflow-x-auto">
+                <pre class="text-green-400 text-sm"><code>from awq.quantizer import quantize_model
+
+# Apply AWQ to the model for 4-bit quantization with a group size of 32
+quantize_model(model, bits=4, group_size=32)</code></pre>
+              </div>
+
+              <div class="bg-yellow-50 p-4 rounded-lg border-l-4 border-yellow-400">
+                <p class="text-yellow-800">
+                  <i class="fas fa-info-circle mr-2"></i>
+                  <strong>Implementation Note:</strong> The majority of weights are subjected to INT4 quantization, with the exception of the final classifier layer, which is kept at higher precision (FP16) to avoid significant impacts on output logits <a href="https://huggingface.co/cpatonn/GLM-4.5-Air-AWQ" class="citation-link" target="_blank">[196]</a>.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div id="techniques-sparsity" class="mb-12">
+            <h3 class="serif text-2xl font-semibold mb-6 text-gray-800">Structured 2:4 Sparsity Implementation</h3>
+            <div class="bg-white rounded-xl p-6 border border-gray-200 mb-6">
+              <p class="text-gray-700 mb-4">
+                Structured sparsity is a powerful compression technique that involves imposing a specific, systematic pattern of zeros within the model's weight matrices. For the GLM-4.5 model, we implemented <strong>2:4 structured sparsity</strong>, a pattern that dictates that for every block of four consecutive weights, two must be non-zero and two must be zero.
+              </p>
+
+              <div class="bg-gray-900 rounded-lg p-4 mb-6 overflow-x-auto">
+                <pre class="text-green-400 text-sm"><code>import torch
+import torch.nn.utils.prune as prune
+
+# Example: Applying 2:4 structured sparsity to the value projection weights in an attention module
+prune.ln_structured(
+    module.attention.self.value.weight,  # Target weight tensor
+    name='weight',                       # Parameter name within the module to prune
+    amount=0.5,                          # Fraction of connections to prune (50% for 2:4)
+    n=2,                                 # Number of non-zeros in the block (N for N:M)
+    dim=0                                # Dimension along which to apply the pruning
+)
+# Make the pruning permanent
+prune.remove(module.attention.self.value, 'weight')</code></pre>
+              </div>
+
+              <div class="grid md:grid-cols-2 gap-6">
+                <div class="bg-blue-50 p-4 rounded-lg">
+                  <h4 class="font-semibold text-blue-900 mb-2">Benefits</h4>
+                  <ul class="text-blue-800 space-y-1">
+                    <li>• ~50% reduction in active weights</li>
+                    <li>• Structured pattern enables hardware acceleration</li>
+                    <li>• Compatible with NVIDIA's cuSPARSELt</li>
+                  </ul>
+                </div>
+                <div class="bg-green-50 p-4 rounded-lg">
+                  <h4 class="font-semibold text-green-900 mb-2">Target Layers</h4>
+                  <ul class="text-green-800 space-y-1">
+                    <li>• Attention mechanisms</li>
+                    <li>• Feed-forward networks</li>
+                    <li>• Linear projection layers</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div id="techniques-mixed" class="mb-12">
+            <h3 class="serif text-2xl font-semibold mb-6 text-gray-800">Mixed Precision Inference Strategy</h3>
+            <div class="bg-white rounded-xl p-6 border border-gray-200 mb-6">
+              <p class="text-gray-700 mb-4">
+                To further optimize memory usage and computational speed, a <strong>mixed precision inference</strong> strategy was implemented for the GLM-4.5 model. This technique leverages the capabilities of modern GPUs, particularly the Tensor Cores available in NVIDIA's Volta architecture.
+              </p>
+
+              <div class="bg-gray-900 rounded-lg p-4 mb-6 overflow-x-auto">
+                <pre class="text-green-400 text-sm"><code>import torch
+
+# Assuming 'model' is the GLM-4.5 model and 'inputs' are the input tensors
+with torch.cuda.amp.autocast():
+    # Forward pass through the model features
+    feature_output = model.feature_extractor(inputs)  # Example: up to the final layers
+    # Final classifier layer (often kept in FP32 or handled outside autocast if sensitive)
+    logits = model.classifier(feature_output)         # Classifier might operate in FP32</code></pre>
+              </div>
+
+              <div class="grid md:grid-cols-2 gap-6">
+                <div class="bg-purple-50 p-4 rounded-lg">
+                  <h4 class="font-semibold text-purple-900 mb-2">FP16 Precision</h4>
+                  <ul class="text-purple-800 space-y-1">
+                    <li>• QKV projections in attention</li>
+                    <li>• Feed-forward network operations</li>
+                    <li>• Matrix multiplications</li>
+                  </ul>
+                </div>
+                <div class="bg-orange-50 p-4 rounded-lg">
+                  <h4 class="font-semibold text-orange-900 mb-2">FP32 Precision</h4>
+                  <ul class="text-orange-800 space-y-1">
+                    <li>• Layer normalization</li>
+                    <li>• Softmax operations</li>
+                    <li>• Final logits computation</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div id="techniques-moe" class="mb-12">
+            <h3 class="serif text-2xl font-semibold mb-6 text-gray-800">Layer-wise Optimization Strategies for MoE Architecture</h3>
+            <div class="bg-white rounded-xl p-6 border border-gray-200">
+              <p class="text-gray-700 mb-6">
+                The GLM-4.5 model, particularly if it incorporates a <strong>Mixture-of-Experts (MoE)</strong> architecture, benefits from layer-wise optimization strategies that tailor compression techniques to the specific characteristics and sensitivities of different components within the model.
+              </p>
+
+              <div class="mermaid-container">
+                <div class="mermaid-controls">
+                  <button class="mermaid-control-btn zoom-in" title="放大">
+                    <i class="fas fa-search-plus"></i>
+                  </button>
+                  <button class="mermaid-control-btn zoom-out" title="缩小">
+                    <i class="fas fa-search-minus"></i>
+                  </button>
+                  <button class="mermaid-control-btn reset-zoom" title="重置">
+                    <i class="fas fa-expand-arrows-alt"></i>
+                  </button>
+                  <button class="mermaid-control-btn fullscreen" title="全屏查看">
+                    <i class="fas fa-expand"></i>
+                  </button>
+                </div>
+                <div class="mermaid" id="mermaid-diagram">
+                  graph TD
+                  A["GLM-4.5 Model"] --> B["Embedding Layers"]
+                  A --> C["Transformer Blocks"]
+                  A --> D["MoE Experts"]
+                  A --> E["Normalization Layers"]
+
+                  B --> B1["FP16 Precision"]
+                  B --> B2["No Quantization"]
+
+                  C --> C1["INT4 Quantization"]
+                  C --> C2["2:4 Sparsity"]
+
+                  D --> D1["INT4 Quantization"]
+                  D --> D2["2:4 Sparsity"]
+
+                  E --> E1["FP32 Precision"]
+                  E --> E2["Protected"]
+
+                  style A fill:#1e3a8a,stroke:#1e40af,stroke-width:3px,color:#fff
+                  style B fill:#0ea5e9,stroke:#0284c7,stroke-width:2px,color:#fff
+                  style C fill:#10b981,stroke:#059669,stroke-width:2px,color:#fff
+                  style D fill:#8b5cf6,stroke:#7c3aed,stroke-width:2px,color:#fff
+                  style E fill:#f59e0b,stroke:#d97706,stroke-width:2px,color:#fff
+                  style B1 fill:#f0f9ff,stroke:#0ea5e9,stroke-width:2px,color:#1e40af
+                  style B2 fill:#f0f9ff,stroke:#0ea5e9,stroke-width:2px,color:#1e40af
+                  style C1 fill:#ecfdf5,stroke:#10b981,stroke-width:2px,color:#065f46
+                  style C2 fill:#ecfdf5,stroke:#10b981,stroke-width:2px,color:#065f46
+                  style D1 fill:#faf5ff,stroke:#8b5cf6,stroke-width:2px,color:#581c87
+                  style D2 fill:#faf5ff,stroke:#8b5cf6,stroke-width:2px,color:#581c87
+                  style E1 fill:#fffbeb,stroke:#f59e0b,stroke-width:2px,color:#92400e
+                  style E2 fill:#fffbeb,stroke:#f59e0b,stroke-width:2px,color:#92400e
+                </div>
+              </div>
+
+              <div class="grid md:grid-cols-3 gap-6 mt-6">
+                <div class="technique-card">
+                  <h4 class="font-semibold mb-3 text-blue-900">Embedding Layers</h4>
+                  <p class="text-gray-600 text-sm">
+                    Maintained at FP16 precision due to sensitivity to quantization noise. Critical for initial token representations.
+                  </p>
+                </div>
+                <div class="technique-card">
+                  <h4 class="font-semibold mb-3 text-green-900">Transformer Blocks</h4>
+                  <p class="text-gray-600 text-sm">
+                    Aggressive INT4 quantization and 2:4 sparsity applied to attention and feed-forward layers.
+                  </p>
+                </div>
+                <div class="technique-card">
+                  <h4 class="font-semibold mb-3 text-purple-900">MoE Experts</h4>
+                  <p class="text-gray-600 text-sm">
+                    Individual expert networks receive quantization and sparsity, while gating mechanisms remain high precision.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <div class="section-divider"></div>
+
+        <!-- Implementation Details -->
+        <section id="implementation" class="mb-16">
+          <h2 class="serif text-4xl font-bold mb-8 text-gray-900">Implementation Details</h2>
+
+          <div id="implementation-software" class="mb-12">
+            <h3 class="serif text-2xl font-semibold mb-6 text-gray-800">Software and Libraries: PyTorch, AWQ, cuSPARSELt</h3>
+            <div class="bg-white rounded-xl p-6 border border-gray-200">
+              <p class="text-gray-700 mb-6">
+                The implementation of the advanced compression techniques for the GLM-4.5 model leveraged a combination of established and specialized software libraries. <strong>PyTorch 1.13 or later</strong> served as the foundational deep learning framework, primarily due to its native and mature support for essential modules related to model pruning and quantization <a href="https://huggingface.co/cpatonn/GLM-4.5-Air-AWQ" class="citation-link" target="_blank">[196]</a>.
+              </p>
+
+              <div class="grid md:grid-cols-3 gap-6">
+                <div class="bg-red-50 p-4 rounded-lg border border-red-200">
+                  <div class="flex items-center mb-3">
+                    <i class="fab fa-python text-red-600 text-2xl mr-3"></i>
+                    <h4 class="font-semibold text-red-900">PyTorch</h4>
+                  </div>
+                  <p class="text-red-800 text-sm">
+                    Foundation framework with torch.ao.pruning module for structured sparsity implementation.
+                  </p>
+                </div>
+                <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                  <div class="flex items-center mb-3">
+                    <i class="fas fa-compress-alt text-blue-600 text-2xl mr-3"></i>
+                    <h4 class="font-semibold text-blue-900">AWQ Library</h4>
+                  </div>
+                  <p class="text-blue-800 text-sm">
+                    Activation-aware Weight Quantization for INT4 precision with minimal accuracy degradation.
+                  </p>
+                </div>
+                <div class="bg-green-50 p-4 rounded-lg border border-green-200">
+                  <div class="flex items-center mb-3">
+                    <i class="fas fa-microchip text-green-600 text-2xl mr-3"></i>
+                    <h4 class="font-semibold text-green-900">cuSPARSELt</h4>
+                  </div>
+                  <p class="text-green-800 text-sm">
+                    NVIDIA library for optimized sparse matrix operations, supporting 2:4 structured sparsity patterns.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div id="implementation-cuda" class="mb-12">
+            <h3 class="serif text-2xl font-semibold mb-6 text-gray-800">CUDA 8.6 Compiler Flags and APIs</h3>
+            <div class="bg-white rounded-xl p-6 border border-gray-200">
+              <p class="text-gray-700 mb-4">
+                To ensure that the compiled model and its associated kernels were optimized for the target <strong>Volta GPU architecture (compute capability sm_70)</strong> under <strong>CUDA 8.6</strong>, specific compiler flags and API usage were employed.
+              </p>
+
+              <div class="bg-gray-900 rounded-lg p-4 mb-6 overflow-x-auto">
+                <pre class="text-green-400 text-sm"><code># Primary CUDA compiler flag for Volta architecture
+nvcc -arch=sm_70 ...
+
+# Key libraries and APIs
+- cuBLAS: Accelerated dense linear algebra
+- cuDNN: Deep neural network primitives
+- cuSPARSELt: Sparse matrix operations</code></pre>
+              </div>
+
+              <div class="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-400">
+                <p class="text-blue-800">
+                  <i class="fas fa-cogs mr-2"></i>
+                  <strong>Architecture Note:</strong> While Volta GPUs don't have native INT4 Tensor Core support like Ampere/Hopper, CUDA 8.6 enables optimized kernels for FP16 Tensor Core operations and structured sparsity patterns.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div id="implementation-api" class="mb-12">
+            <h3 class="serif text-2xl font-semibold mb-6 text-gray-800">Example Training/Inference API Call</h3>
+            <div class="bg-white rounded-xl p-6 border border-gray-200">
+              <p class="text-gray-700 mb-6">
+                The deployment of the optimized GLM-4.5 model, incorporating INT4 quantization, 2:4 sparsity, and mixed precision, would typically be managed through an inference serving framework. Below is a conceptual example using a hypothetical serving framework:
+              </p>
+
+              <div class="bg-gray-900 rounded-lg p-4 mb-6 overflow-x-auto">
+                <pre class="text-green-400 text-sm"><code># Conceptual example for serving GLM-4.5 with vLLM, assuming AWQ and sparsity are handled
+vllm serve glm-4.5-optimized --dtype float16 --quantization awq --sparsity 2:4 --tensor-parallel-size &lt;N&gt;</code></pre>
+              </div>
+
+              <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                  <h4 class="font-semibold mb-3">Parameters Explained:</h4>
+                  <ul class="space-y-2 text-gray-700">
+                    <li><code class="bg-gray-100 px-2 py-1 rounded text-sm">--dtype float16</code>: FP16 computations for activations</li>
+                    <li><code class="bg-gray-100 px-2 py-1 rounded text-sm">--quantization awq</code>: INT4 quantization via AWQ</li>
+                    <li><code class="bg-gray-100 px-2 py-1 rounded text-sm">--sparsity 2:4</code>: 2:4 structured sparsity pattern</li>
+                    <li><code class="bg-gray-100 px-2 py-1 rounded text-sm">--tensor-parallel-size</code>: Model parallelism degree</li>
+                  </ul>
+                </div>
+                <div class="bg-yellow-50 p-4 rounded-lg">
+                  <h4 class="font-semibold text-yellow-900 mb-2">Implementation Pipeline</h4>
+                  <ol class="text-yellow-800 space-y-1 text-sm">
+                    <li>1. Apply AWQ quantization to model</li>
+                    <li>2. Implement 2:4 structured sparsity</li>
+                    <li>3. Configure mixed precision settings</li>
+                    <li>4. Load optimized model in serving framework</li>
+                  </ol>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <div class="section-divider"></div>
+
+        <!-- Performance Benchmarks -->
+        <section id="performance" class="mb-16">
+          <h2 class="serif text-4xl font-bold mb-8 text-gray-900">Performance Benchmarks</h2>
+
+          <div class="bg-white rounded-xl p-6 border border-gray-200 mb-8">
+            <h3 class="serif text-xl font-semibold mb-6 text-gray-800">Summary of Compression Techniques and Expected Performance Gains</h3>
+
+            <div class="overflow-x-auto">
+              <table class="w-full border-collapse">
+                <thead>
+                  <tr class="border-b-2 border-gray-200">
+                    <th class="text-left py-3 px-4 font-semibold text-gray-900">Technique</th>
+                    <th class="text-left py-3 px-4 font-semibold text-gray-900">Target Layers</th>
+                    <th class="text-left py-3 px-4 font-semibold text-gray-900">Memory Reduction</th>
+                    <th class="text-left py-3 px-4 font-semibold text-gray-900">Speedup</th>
+                    <th class="text-left py-3 px-4 font-semibold text-gray-900">Accuracy Considerations</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                  <tr class="hover:bg-gray-50">
+                    <td class="py-4 px-4 font-medium text-blue-900">INT4 PTQ (AWQ)</td>
+                    <td class="py-4 px-4 text-gray-700">Linear Layers</td>
+                    <td class="py-4 px-4 text-green-700 font-semibold">~4x (weights)</td>
+                    <td class="py-4 px-4 text-green-700 font-semibold">~1.5-2x</td>
+                    <td class="py-4 px-4 text-gray-700 text-sm">Calibration with representative data, protection of salient weights</td>
+                  </tr>
+                  <tr class="hover:bg-gray-50">
+                    <td class="py-4 px-4 font-medium text-green-900">Structured 2:4 Sparsity</td>
+                    <td class="py-4 px-4 text-gray-700">Attention & FFN Linear</td>
+                    <td class="py-4 px-4 text-green-700 font-semibold">~2x (sparse weights)</td>
+                    <td class="py-4 px-4 text-green-700 font-semibold">~1.2-2x</td>
+                    <td class="py-4 px-4 text-gray-700 text-sm">Pruning criteria, fine-tuning to recover accuracy</td>
+                  </tr>
+                  <tr class="hover:bg-gray-50">
+                    <td class="py-4 px-4 font-medium text-purple-900">Mixed Precision Inference</td>
+                    <td class="py-4 px-4 text-gray-700">All Computations</td>
+                    <td class="py-4 px-4 text-green-700 font-semibold">~2x (activations/weights)</td>
+                    <td class="py-4 px-4 text-green-700 font-semibold">~2-3x</td>
+                    <td class="py-4 px-4 text-gray-700 text-sm">Precision-sensitive operations in FP32</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div id="performance-memory" class="mb-12">
+            <h3 class="serif text-2xl font-semibold mb-6 text-gray-800">Memory Footprint Reduction</h3>
+            <div class="bg-white rounded-xl p-6 border border-gray-200">
+              <p class="text-gray-700 mb-4">
+                The combined application of INT4 PTQ and 2:4 sparsity is expected to lead to a <strong>dramatic reduction in the memory footprint</strong> of the GLM-4.5 model. INT4 quantization alone can reduce the size of the quantized weights by approximately <strong>4 times</strong> compared to FP16.
+              </p>
+
+              <div class="bg-blue-50 p-4 rounded-lg mb-6">
+                <h4 class="font-semibold text-blue-900 mb-2">Memory Calculation Example:</h4>
+                <div class="text-blue-800 space-y-2 text-sm">
+                  <p><strong>Baseline (FP16):</strong> 355B parameters × 2 bytes = 710GB</p>
+                  <p><strong>INT4 Quantization:</strong> 710GB ÷ 4 = ~177.5GB</p>
+                  <p><strong>+ 2:4 Sparsity:</strong> 177.5GB ÷ 2 = ~88.75GB</p>
+                  <p class="font-semibold text-green-700">Total Reduction: ~8x (for targeted layers)</p>
+                </div>
+              </div>
+
+              <p class="text-gray-700">
+                Considering that linear layers often constitute the vast majority of parameters in LLMs, this translates to a substantial overall reduction, potentially bringing the model size down to a range that is more manageable for deployment on multiple high-end GPUs.
+              </p>
+            </div>
+          </div>
+
+          <div id="performance-speed" class="mb-12">
+            <h3 class="serif text-2xl font-semibold mb-6 text-gray-800">Inference Speedup</h3>
+            <div class="bg-white rounded-xl p-6 border border-gray-200">
+              <p class="text-gray-700 mb-6">
+                <strong>Inference speedup</strong> is a critical goal, and the proposed techniques offer multiple avenues for acceleration. The cumulative effect of these techniques, applied strategically across the model, is expected to significantly reduce latency and increase tokens processed per second.
+              </p>
+
+              <div class="grid md:grid-cols-3 gap-6">
+                <div class="technique-card">
+                  <div class="flex items-center justify-between mb-3">
+                    <h4 class="font-semibold text-blue-900">INT4 Operations</h4>
+                    <span class="text-2xl font-bold text-green-600">1.5-2x</span>
+                  </div>
+                  <p class="text-gray-600 text-sm">
+                    Reduced data movement and more operations per cycle via Volta INT4 capabilities.
+                  </p>
+                </div>
+                <div class="technique-card">
+                  <div class="flex items-center justify-between mb-3">
+                    <h4 class="font-semibold text-green-900">2:4 Sparsity</h4>
+                    <span class="text-2xl font-bold text-green-600">1.2-2x</span>
+                  </div>
+                  <p class="text-gray-600 text-sm">
+                    Skipping zero computations with structured sparsity patterns, even on Volta via optimized kernels.
+                  </p>
+                </div>
+                <div class="technique-card">
+                  <div class="flex items-center justify-between mb-3">
+                    <h4 class="font-semibold text-purple-900">FP16 Tensor Cores</h4>
+                    <span class="text-2xl font-bold text-green-600">2-3x</span>
+                  </div>
+                  <p class="text-gray-600 text-sm">
+                    Native Volta Tensor Core support for FP16 matrix operations.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div id="performance-accuracy" class="mb-12">
+            <h3 class="serif text-2xl font-semibold mb-6 text-gray-800">Accuracy Considerations and Maintenance</h3>
+            <div class="bg-white rounded-xl p-6 border border-gray-200">
+              <p class="text-gray-700 mb-6">
+                Maintaining <strong>near-lossless accuracy</strong> is paramount. Aggressive compression techniques inherently risk degrading model performance, but careful implementation can minimize this impact.
+              </p>
+
+              <div class="grid md:grid-cols-2 gap-6">
+                <div class="bg-green-50 p-4 rounded-lg">
+                  <h4 class="font-semibold text-green-900 mb-3">Accuracy Preservation Strategies</h4>
+                  <ul class="text-green-800 space-y-2 text-sm">
+                    <li>• AWQ calibration with activation statistics</li>
+                    <li>• Fine-tuning after pruning to recover accuracy</li>
+                    <li>• Mixed precision for numerically stable operations</li>
+                    <li>• Layer-wise optimization sensitivity analysis</li>
+                  </ul>
+                </div>
+                <div class="bg-orange-50 p-4 rounded-lg">
+                  <h4 class="font-semibold text-orange-900 mb-3">Target Accuracy Metrics</h4>
+                  <ul class="text-orange-800 space-y-2 text-sm">
+                    <li>• Within 0.5% - 1% of original model performance</li>
+                    <li>• Key benchmark task preservation</li>
+                    <li>• Robustness across diverse inputs</li>
+                    <li>• Long-context capability maintenance</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div class="mt-6 p-4 bg-gray-50 rounded-lg">
+                <p class="text-gray-700 text-sm">
+                  <i class="fas fa-chart-line mr-2"></i>
+                  <strong>Iterative Optimization:</strong> The overall strategy involves applying techniques, evaluating accuracy on relevant benchmarks, and adjusting parameters or fine-tuning as needed to maintain optimal performance.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <div class="section-divider"></div>
+
+        <!-- Discussion -->
+        <section id="discussion" class="mb-16">
+          <h2 class="serif text-4xl font-bold mb-8 text-gray-900">Discussion</h2>
+
+          <div id="discussion-synergy" class="mb-12">
+            <h3 class="serif text-2xl font-semibold mb-6 text-gray-800">Synergy of Quantization and Sparsity in LLMs</h3>
+            <div class="bg-white rounded-xl p-6 border border-gray-200">
+              <p class="text-gray-700 mb-6">
+                The combination of <strong>quantization and sparsity</strong> offers a powerful synergistic effect for compressing Large Language Models (LLMs) like GLM-4.5. While each technique provides individual benefits, their joint application can lead to compounded gains in efficiency.
+              </p>
+
+              <div class="mermaid-container">
+                <div class="mermaid-controls">
+                  <button class="mermaid-control-btn zoom-in" title="放大">
+                    <i class="fas fa-search-plus"></i>
+                  </button>
+                  <button class="mermaid-control-btn zoom-out" title="缩小">
+                    <i class="fas fa-search-minus"></i>
+                  </button>
+                  <button class="mermaid-control-btn reset-zoom" title="重置">
+                    <i class="fas fa-expand-arrows-alt"></i>
+                  </button>
+                  <button class="mermaid-control-btn fullscreen" title="全屏查看">
+                    <i class="fas fa-expand"></i>
+                  </button>
+                </div>
+                <div class="mermaid" id="mermaid-synergy">
+                  graph LR
+                  A["Original Weights
+                  <br />FP16/FP32"] --> B["Apply 2:4 Sparsity
+                  <br />50% Reduction"]
+                  B --> C["Sparse Weights
+                  <br />50% Non-zero"]
+                  C --> D["Apply INT4 Quantization
+                  <br />4x Reduction"]
+                  D --> E["Final Compressed Weights
+                  <br />8x Total Reduction"]
+
+                  style A fill:#f1f5f9,stroke:#64748b,stroke-width:2px,color:#1e293b
+                  style B fill:#fef3c7,stroke:#f59e0b,stroke-width:2px,color:#92400e
+                  style C fill:#fef3c7,stroke:#f59e0b,stroke-width:2px,color:#92400e
+                  style D fill:#dcfce7,stroke:#10b981,stroke-width:2px,color:#065f46
+                  style E fill:#dbeafe,stroke:#3b82f6,stroke-width:2px,color:#1e40af
+                </div>
+              </div>
+
+              <div class="bg-blue-50 p-4 rounded-lg mt-6">
+                <p class="text-blue-800">
+                  <i class="fas fa-lightbulb mr-2"></i>
+                  <strong>Compounded Benefits:</strong> When applied together, a model can first be pruned to a 2:4 sparse pattern, and then the remaining non-zero weights can be quantized to INT4. This dual compression can lead to significantly smaller model sizes than either technique alone and can further accelerate inference.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div id="discussion-moe" class="mb-12">
+            <h3 class="serif text-2xl font-semibold mb-6 text-gray-800">Impact of Mixture-of-Experts (MoE) Architecture</h3>
+            <div class="bg-white rounded-xl p-6 border border-gray-200">
+              <p class="text-gray-700 mb-6">
+                The <strong>Mixture-of-Experts (MoE) architecture</strong> in GLM-4.5 presents unique opportunities and challenges for model compression. MoE models are inherently more parameter-efficient during inference than dense models of the same total size because only a subset of experts is activated for each input token.
+              </p>
+
+              <div class="grid md:grid-cols-2 gap-6">
+                <div class="bg-purple-50 p-4 rounded-lg">
+                  <h4 class="font-semibold text-purple-900 mb-3">Opportunities</h4>
+                  <ul class="text-purple-800 space-y-2 text-sm">
+                    <li>• Inherent dynamic sparsity from expert routing</li>
+                    <li>• Individual expert networks can be compressed</li>
+                    <li>• Reduced storage per expert via quantization</li>
+                    <li>• Layer-wise optimization flexibility</li>
+                  </ul>
+                </div>
+                <div class="bg-red-50 p-4 rounded-lg">
+                  <h4 class="font-semibold text-red-900 mb-3">Challenges</h4>
+                  <ul class="text-red-800 space-y-2 text-sm">
+                    <li>• Gating mechanism precision sensitivity</li>
+                    <li>• Varying expert sensitivity to compression</li>
+                    <li>• Communication overhead considerations</li>
+                    <li>• Balance between compression and routing accuracy</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div class="mt-6 p-4 bg-gray-50 rounded-lg">
+                <p class="text-gray-700 text-sm">
+                  <i class="fas fa-info-circle mr-2"></i>
+                  <strong>Reference:</strong> Frameworks like "Mixture Compressor" <a href="https://openreview.net/pdf?id=hheFYjOsWO" class="citation-link" target="_blank">[45]</a> suggest adaptive bit-widths or sparsity levels per expert could be beneficial for MoE architectures.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div id="discussion-hardware" class="mb-12">
+            <h3 class="serif text-2xl font-semibold mb-6 text-gray-800">Viability of INT4 and Hardware Efficiency of 2:4 Sparsity</h3>
+            <div class="bg-white rounded-xl p-6 border border-gray-200">
+              <p class="text-gray-700 mb-6">
+                The <strong>viability of INT4 precision</strong> for LLMs has been increasingly demonstrated by various research and industry efforts, including its application to models like GLM-4.5-Air <a href="https://huggingface.co/cpatonn/GLM-4.5-Air-AWQ" class="citation-link" target="_blank">[196]</a>.
+              </p>
+
+              <div class="grid md:grid-cols-2 gap-6 mb-6">
+                <div class="bg-green-50 p-4 rounded-lg border border-green-200">
+                  <h4 class="font-semibold text-green-900 mb-3">INT4 on Volta (CUDA 8.6)</h4>
+                  <ul class="text-green-800 space-y-2 text-sm">
+                    <li>• DP4A instructions for dot products</li>
+                    <li>• mma.m16n8k64 for INT4 matrix multiplies</li>
+                    <li>• Requires custom kernel development</li>
+                    <li>• AWQ essential for accuracy preservation</li>
+                  </ul>
+                </div>
+                <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                  <h4 class="font-semibold text-blue-900 mb-3">2:4 Sparsity Efficiency</h4>
+                  <ul class="text-blue-800 space-y-2 text-sm">
+                    <li>• Best on Ampere+ with Sparse Tensor Cores</li>
+                    <li>• Volta: memory bandwidth savings</li>
+                    <li>• Optimized software kernels possible</li>
+                    <li>• cuSPARSELt principles applicable</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div class="bg-yellow-50 p-4 rounded-lg border-l-4 border-yellow-400">
+                <p class="text-yellow-800">
+                  <i class="fas fa-exclamation-triangle mr-2"></i>
+                  <strong>Hardware Reality:</strong> While Volta GPUs don't have dedicated Sparse Tensor Cores like Ampere, the structured 2:4 pattern still enables compressed storage and optimized software kernels for memory bandwidth savings.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div id="discussion-future" class="mb-12">
+            <h3 class="serif text-2xl font-semibold mb-6 text-gray-800">Future Work: Dynamic Sparsity and Lower Precision</h3>
+            <div class="bg-white rounded-xl p-6 border border-gray-200">
+              <p class="text-gray-700 mb-6">
+                Looking ahead, several avenues for further optimizing models like GLM-4.5 exist. <strong>Dynamic sparsity</strong> is an emerging area where the sparsity pattern is not fixed after training but can adapt at inference time based on the input.
+              </p>
+
+              <div class="grid md:grid-cols-2 gap-6 mb-6">
+                <div class="space-y-4">
+                  <div class="technique-card">
+                    <h4 class="font-semibold mb-2 text-indigo-900">Dynamic Sparsity</h4>
+                    <p class="text-gray-600 text-sm">
+                      Sparsity patterns that adapt at inference time based on input characteristics, potentially offering greater compression and speedup.
+                    </p>
+                  </div>
+                  <div class="technique-card">
+                    <h4 class="font-semibold mb-2 text-pink-900">Lower Precision Formats</h4>
+                    <p class="text-gray-600 text-sm">
+                      Exploring 2-bit or ternary weights for additional memory savings, requiring specialized quantization algorithms.
+                    </p>
+                  </div>
+                </div>
+                <div class="space-y-4">
+                  <div class="technique-card">
+                    <h4 class="font-semibold mb-2 text-teal-900">Hybrid Precision Models</h4>
+                    <p class="text-gray-600 text-sm">
+                      Different layers or parts of layers using optimal numerical formats based on sensitivity analysis.
+                    </p>
+                  </div>
+                  <div class="technique-card">
+                    <h4 class="font-semibold mb-2 text-amber-900">Algorithm-Hardware Co-design</h4>
+                    <p class="text-gray-600 text-sm">
+                      Future hardware architectures evolving to better support advanced compression techniques.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="bg-gradient-to-r from-blue-50 to-purple-50 p-6 rounded-lg">
+                <h4 class="font-semibold text-gray-900 mb-3">Research Directions</h4>
+                <p class="text-gray-700 text-sm mb-4">
+                  Continued research into robust PTQ methods that can handle diverse model architectures and datasets with minimal calibration overhead will be vital for widespread adoption of these advanced compression techniques.
+                </p>
+                <div class="flex flex-wrap gap-2">
+                  <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">Dynamic Sparsity</span>
+                  <span class="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-xs">2-bit Quantization</span>
+                  <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs">Hybrid Precision</span>
+                  <span class="px-3 py-1 bg-orange-100 text-orange-800 rounded-full text-xs">Hardware Co-design</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <script>
+        // Initialize Mermaid with custom theme and configuration
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'base',
+            themeVariables: {
+                // Primary colors with high contrast
+                primaryColor: '#1e3a8a',
+                primaryTextColor: '#ffffff',
+                primaryBorderColor: '#1e40af',
+                
+                // Secondary colors
+                secondaryColor: '#0ea5e9',
+                secondaryTextColor: '#ffffff',
+                secondaryBorderColor: '#0284c7',
+                
+                // Tertiary colors
+                tertiaryColor: '#10b981',
+                tertiaryTextColor: '#ffffff',
+                tertiaryBorderColor: '#059669',
+                
+                // Additional colors for variety
+                quaternaryColor: '#8b5cf6',
+                quaternaryTextColor: '#ffffff',
+                quaternaryBorderColor: '#7c3aed',
+                
+                // Background and lines
+                background: '#ffffff',
+                lineColor: '#64748b',
+                
+                // Node backgrounds with high contrast text
+                nodeBkg: '#f8fafc',
+                nodeTextColor: '#1e293b',
+                nodeBorder: '#e2e8f0',
+                
+                // Cluster backgrounds
+                clusterBkg: '#f1f5f9',
+                clusterBorder: '#cbd5e1',
+                
+                // Special node types with good contrast
+                fillType0: '#1e3a8a',
+                fillType1: '#0ea5e9', 
+                fillType2: '#10b981',
+                fillType3: '#8b5cf6',
+                fillType4: '#f59e0b',
+                fillType5: '#ef4444',
+                fillType6: '#06b6d4',
+                fillType7: '#84cc16'
+            },
+            flowchart: {
+                useMaxWidth: false,
+                htmlLabels: true,
+                curve: 'basis',
+                padding: 20
+            },
+            sequence: {
+                useMaxWidth: false,
+                wrap: true
+            },
+            gantt: {
+                useMaxWidth: false
+            }
+        });
+
+        // Table of Contents Active Link Tracking
+        const tocLinks = document.querySelectorAll('.toc-link');
+        const sections = document.querySelectorAll('section[id], div[id]');
+
+        function updateActiveLink() {
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.clientHeight;
+                if (window.scrollY >= (sectionTop - 200)) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            tocLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === '#' + current) {
+                    link.classList.add('active');
+                }
+            });
+        }
+
+        window.addEventListener('scroll', updateActiveLink);
+        updateActiveLink();
+
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Initialize Mermaid Controls for zoom and pan
+        function initializeMermaidControls() {
+            const containers = document.querySelectorAll('.mermaid-container');
+
+            containers.forEach(container => {
+            const mermaidElement = container.querySelector('.mermaid');
+            let scale = 1;
+            let isDragging = false;
+            let startX, startY, translateX = 0, translateY = 0;
+
+            // 触摸相关状态
+            let isTouch = false;
+            let touchStartTime = 0;
+            let initialDistance = 0;
+            let initialScale = 1;
+            let isPinching = false;
+
+            // Zoom controls
+            const zoomInBtn = container.querySelector('.zoom-in');
+            const zoomOutBtn = container.querySelector('.zoom-out');
+            const resetBtn = container.querySelector('.reset-zoom');
+            const fullscreenBtn = container.querySelector('.fullscreen');
+
+            function updateTransform() {
+                mermaidElement.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+
+                if (scale > 1) {
+                container.classList.add('zoomed');
+                } else {
+                container.classList.remove('zoomed');
+                }
+
+                mermaidElement.style.cursor = isDragging ? 'grabbing' : 'grab';
+            }
+
+            if (zoomInBtn) {
+                zoomInBtn.addEventListener('click', () => {
+                scale = Math.min(scale * 1.25, 4);
+                updateTransform();
+                });
+            }
+
+            if (zoomOutBtn) {
+                zoomOutBtn.addEventListener('click', () => {
+                scale = Math.max(scale / 1.25, 0.3);
+                if (scale <= 1) {
+                    translateX = 0;
+                    translateY = 0;
+                }
+                updateTransform();
+                });
+            }
+
+            if (resetBtn) {
+                resetBtn.addEventListener('click', () => {
+                scale = 1;
+                translateX = 0;
+                translateY = 0;
+                updateTransform();
+                });
+            }
+
+            if (fullscreenBtn) {
+                fullscreenBtn.addEventListener('click', () => {
+                if (container.requestFullscreen) {
+                    container.requestFullscreen();
+                } else if (container.webkitRequestFullscreen) {
+                    container.webkitRequestFullscreen();
+                } else if (container.msRequestFullscreen) {
+                    container.msRequestFullscreen();
+                }
+                });
+            }
+
+            // Mouse Events
+            mermaidElement.addEventListener('mousedown', (e) => {
+                if (isTouch) return; // 如果是触摸设备，忽略鼠标事件
+
+                isDragging = true;
+                startX = e.clientX - translateX;
+                startY = e.clientY - translateY;
+                mermaidElement.style.cursor = 'grabbing';
+                updateTransform();
+                e.preventDefault();
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (isDragging && !isTouch) {
+                translateX = e.clientX - startX;
+                translateY = e.clientY - startY;
+                updateTransform();
+                }
+            });
+
+            document.addEventListener('mouseup', () => {
+                if (isDragging && !isTouch) {
+                isDragging = false;
+                mermaidElement.style.cursor = 'grab';
+                updateTransform();
+                }
+            });
+
+            document.addEventListener('mouseleave', () => {
+                if (isDragging && !isTouch) {
+                isDragging = false;
+                mermaidElement.style.cursor = 'grab';
+                updateTransform();
+                }
+            });
+
+            // 获取两点之间的距离
+            function getTouchDistance(touch1, touch2) {
+                return Math.hypot(
+                touch2.clientX - touch1.clientX,
+                touch2.clientY - touch1.clientY
+                );
+            }
+
+            // Touch Events - 触摸事件处理
+            mermaidElement.addEventListener('touchstart', (e) => {
+                isTouch = true;
+                touchStartTime = Date.now();
+
+                if (e.touches.length === 1) {
+                // 单指拖动
+                isPinching = false;
+                isDragging = true;
+
+                const touch = e.touches[0];
+                startX = touch.clientX - translateX;
+                startY = touch.clientY - translateY;
+
+                } else if (e.touches.length === 2) {
+                // 双指缩放
+                isPinching = true;
+                isDragging = false;
+
+                const touch1 = e.touches[0];
+                const touch2 = e.touches[1];
+                initialDistance = getTouchDistance(touch1, touch2);
+                initialScale = scale;
+                }
+
+                e.preventDefault();
+            }, { passive: false });
+
+            mermaidElement.addEventListener('touchmove', (e) => {
+                if (e.touches.length === 1 && isDragging && !isPinching) {
+                // 单指拖动
+                const touch = e.touches[0];
+                translateX = touch.clientX - startX;
+                translateY = touch.clientY - startY;
+                updateTransform();
+
+                } else if (e.touches.length === 2 && isPinching) {
+                // 双指缩放
+                const touch1 = e.touches[0];
+                const touch2 = e.touches[1];
+                const currentDistance = getTouchDistance(touch1, touch2);
+
+                if (initialDistance > 0) {
+                    const newScale = Math.min(Math.max(
+                    initialScale * (currentDistance / initialDistance),
+                    0.3
+                    ), 4);
+                    scale = newScale;
+                    updateTransform();
+                }
+                }
+
+                e.preventDefault();
+            }, { passive: false });
+
+            mermaidElement.addEventListener('touchend', (e) => {
+                // 重置状态
+                if (e.touches.length === 0) {
+                isDragging = false;
+                isPinching = false;
+                initialDistance = 0;
+
+                // 延迟重置isTouch，避免鼠标事件立即触发
+                setTimeout(() => {
+                    isTouch = false;
+                }, 100);
+                } else if (e.touches.length === 1 && isPinching) {
+                // 从双指变为单指，切换为拖动模式
+                isPinching = false;
+                isDragging = true;
+
+                const touch = e.touches[0];
+                startX = touch.clientX - translateX;
+                startY = touch.clientY - translateY;
+                }
+
+                updateTransform();
+            });
+
+            mermaidElement.addEventListener('touchcancel', (e) => {
+                isDragging = false;
+                isPinching = false;
+                initialDistance = 0;
+
+                setTimeout(() => {
+                isTouch = false;
+                }, 100);
+
+                updateTransform();
+            });
+
+            // Enhanced wheel zoom with better center point handling
+            container.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                const rect = container.getBoundingClientRect();
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+
+                const delta = e.deltaY > 0 ? 0.9 : 1.1;
+                const newScale = Math.min(Math.max(scale * delta, 0.3), 4);
+
+                // Adjust translation to zoom towards center
+                if (newScale !== scale) {
+                const scaleDiff = newScale / scale;
+                translateX = translateX * scaleDiff;
+                translateY = translateY * scaleDiff;
+                scale = newScale;
+
+                if (scale <= 1) {
+                    translateX = 0;
+                    translateY = 0;
+                }
+
+                updateTransform();
+                }
+            });
+
+            // Initialize display
+            updateTransform();
+            });
+        }
+
+        // Initialize mermaid controls after page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeMermaidControls();
+        });
+    </script>
+  </body>
+
+</html>
